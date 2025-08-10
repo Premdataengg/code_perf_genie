@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  pyspark-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyspark-performance-demo
+    ports:
+      - "4040:4040"  # Spark UI
+      - "8080:8080"  # Spark History Server (if needed)
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./src:/app/src
+      - ./config:/app/config
+    environment:
+      - PYTHONPATH=/app/src
+      - SPARK_LOCAL_IP=0.0.0.0
+      - SPARK_DRIVER_HOST=0.0.0.0
+    command: ["python", "main.py"]
+    stdin_open: true
+    tty: true
+
+  # Optional: Spark History Server for viewing completed applications
+  spark-history:
+    build: .
+    container_name: spark-history-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/opt/spark/logs
+    command: ["/opt/spark/sbin/start-history-server.sh"]
+    depends_on:
+      - pyspark-demo
+    profiles:
+      - history-server

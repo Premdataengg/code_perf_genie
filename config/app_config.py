@@ -63,3 +63,12 @@ DEV_CONFIG = {
     "show_dataframe_schemas": False,
     "enable_profiling": False
 }
+
+# Dataset configuration
+DATASET_CONFIG = {
+    "employees_count": 30,
+    "departments_count": 7,
+    "projects_count": 10,
+    "large_dataset_size": 1000,
+    "partition_count": 4
+}

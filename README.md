@@ -24,7 +24,94 @@ This project showcases Spark SQL performance tuning by presenting both **anti-pa
 
 ## 🚀 Quick Start
 
-### 1. Installation
+### Option 1: Docker (Recommended)
+
+The easiest way to run the demo is using Docker, which provides a consistent environment with all dependencies pre-installed.
+
+#### Docker Architecture
+
+This project uses the **official Apache Spark Docker image** for optimal performance and reliability:
+
+- **Base Image**: `apache/spark:3.5.0-python3`
+- **Build Time**: ~1 second (vs ~88 seconds for custom build)
+- **Image Size**: 2.19GB (vs 2.78GB for custom build)
+- **Reliability**: Official Apache-maintained image
+
+#### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) installed
+- [Docker Compose](https://docs.docker.com/compose/install/) installed
+
+#### Quick Start with Docker
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd code_perf_genie
+
+# Run the quick start script (recommended for first-time users)
+./scripts/quick-start.sh
+
+# Or manually:
+# 1. Build the Docker image
+./scripts/docker-run.sh build
+
+# 2. Run the demo
+./scripts/docker-run.sh run
+
+# 3. View Spark UI (optional)
+# Open http://localhost:4040 in your browser
+```
+
+#### Docker Commands
+
+```bash
+# Run all queries (anti-patterns and best practices)
+./scripts/docker-run.sh run
+
+# Run only anti-patterns
+./scripts/docker-run.sh run --mode anti_patterns
+
+# Run only best practices
+./scripts/docker-run.sh run --mode best_practices
+
+# Run with performance monitoring
+./scripts/docker-run.sh run --monitor --verbose
+
+# Interactive mode (bash shell in container)
+./scripts/docker-run.sh run-interactive
+
+# View logs
+./scripts/docker-run.sh logs
+
+# Stop containers
+./scripts/docker-run.sh stop
+
+# Clean up Docker resources
+./scripts/docker-run.sh clean
+
+# Get help
+./scripts/docker-run.sh help
+```
+
+#### Alternative: Custom Docker Build
+
+If you need custom Spark configurations, a `Dockerfile.custom` is available:
+
+```bash
+# Use custom Dockerfile
+docker build -f Dockerfile.custom -t pyspark-custom .
+```
+
+### Option 2: Local Installation
+
+If you prefer to run locally without Docker:
+
+#### Prerequisites
+- **Python 3.7+**
+- **Java 8+** (required for Spark)
+- **PySpark 3.5+**
+
+#### Installation
 
 ```bash
 # Clone the repository
@@ -35,17 +122,17 @@ cd code_perf_genie
 pip install -r requirements.txt
 ```
 
-### 2. Run the Demo
+#### Run the Demo
 
 ```bash
 # Run all queries (anti-patterns and best practices)
 python main.py
 
 # Run only anti-patterns
-python main.py --mode anti-patterns
+python main.py --mode anti_patterns
 
 # Run only best practices
-python main.py --mode best-practices
+python main.py --mode best_practices
 
 # Run with performance monitoring
 python main.py --monitor
@@ -58,6 +145,10 @@ code_perf_genie/
 ├── main.py                          # Main application entry point
 ├── requirements.txt                 # Python dependencies
 ├── README.md                       # This file
+├── Dockerfile                      # Docker configuration (uses official Spark image)
+├── Dockerfile.custom               # Custom Docker build (for special configurations)
+├── docker-compose.yml              # Docker Compose configuration
+├── .dockerignore                   # Docker ignore file
 ├── config/
 │   ├── __init__.py
 │   ├── spark_config.py             # Spark configuration settings
@@ -87,6 +178,9 @@ code_perf_genie/
 │       ├── __init__.py
 │       ├── performance_monitor.py  # Performance monitoring utilities
 │       └── output_formatter.py     # Output formatting utilities
+├── scripts/
+│   ├── docker-run.sh               # Docker runner script
+│   └── quick-start.sh              # Quick start script
 ├── data/
 │   ├── sample_data.csv             # Sample CSV data
 │   └── generated/                  # Generated test data
