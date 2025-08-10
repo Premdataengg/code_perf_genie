@@ -1,5 +1,5 @@
 # Use Apache Spark base image
-FROM apache/spark:3.5.0-python3
+FROM apache/spark:3.5.6-python3
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

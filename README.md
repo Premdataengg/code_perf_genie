@@ -32,7 +32,7 @@ The easiest way to run the demo is using Docker, which provides a consistent env
 
 This project uses the **official Apache Spark Docker image** for optimal performance and reliability:
 
-- **Base Image**: `apache/spark:3.5.0-python3`
+- **Base Image**: `apache/spark:3.5.6-python3`
 - **Build Time**: ~1 second (vs ~88 seconds for custom build)
 - **Image Size**: 2.19GB (vs 2.78GB for custom build)
 - **Reliability**: Official Apache-maintained image

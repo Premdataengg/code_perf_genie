@@ -28,13 +28,33 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y openjdk-11-jdk wget
-          SPARK_VER=3.5.0
-          wget https://downloads.apache.org/spark/spark-${SPARK_VER}/spark-${SPARK_VER}-bin-hadoop3.tgz
-          tar xf spark-${SPARK_VER}-bin-hadoop3.tgz
-          sudo mv spark-${SPARK_VER}-bin-hadoop3 /opt/spark
-          echo "SPARK_HOME=/opt/spark" >> $GITHUB_ENV
-          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
-          echo "$SPARK_HOME/bin" >> $GITHUB_PATH
+          
+          # Try multiple Spark versions in case one is unavailable
+          SPARK_VERSIONS=("3.5.6" "3.5.5" "3.5.4" "3.5.3")
+          SPARK_VER=""
+          
+          for version in "${SPARK_VERSIONS[@]}"; do
+            echo "Trying Spark version: $version"
+            if wget --spider https://downloads.apache.org/spark/spark-${version}/spark-${version}-bin-hadoop3.tgz 2>/dev/null; then
+              SPARK_VER=$version
+              echo "Found available Spark version: $SPARK_VER"
+              break
+            fi
+          done
+          
+          if [ -z "$SPARK_VER" ]; then
+            echo "❌ No available Spark version found. Using PySpark from pip instead."
+            echo "SPARK_HOME=" >> $GITHUB_ENV
+            echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+          else
+            echo "📦 Downloading Spark $SPARK_VER..."
+            wget https://downloads.apache.org/spark/spark-${SPARK_VER}/spark-${SPARK_VER}-bin-hadoop3.tgz
+            tar xf spark-${SPARK_VER}-bin-hadoop3.tgz
+            sudo mv spark-${SPARK_VER}-bin-hadoop3 /opt/spark
+            echo "SPARK_HOME=/opt/spark" >> $GITHUB_ENV
+            echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+            echo "$SPARK_HOME/bin" >> $GITHUB_PATH
+          fi
 
       - name: Install Python dependencies
         run: |

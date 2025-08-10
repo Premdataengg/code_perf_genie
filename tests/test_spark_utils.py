@@ -38,7 +38,7 @@ class TestSparkUtils:
     def test_get_spark_metrics(self):
         """Test getting Spark metrics."""
         mock_spark = Mock()
-        mock_spark.version = "3.5.0"
+        mock_spark.version = "3.5.6"
         mock_spark.conf.get.side_effect = lambda key: {
             "spark.master": "local[*]",
             "spark.app.name": "TestApp",
@@ -49,7 +49,7 @@ class TestSparkUtils:
         
         metrics = get_spark_metrics(mock_spark)
         
-        assert metrics["spark_version"] == "3.5.0"
+        assert metrics["spark_version"] == "3.5.6"
         assert metrics["master_url"] == "local[*]"
         assert metrics["app_name"] == "TestApp"
     
