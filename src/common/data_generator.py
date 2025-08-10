@@ -112,10 +112,7 @@ def create_sample_dataframes(spark: SparkSession) -> Tuple[DataFrame, DataFrame,
     # Create large dataset for performance testing
     large_df = generate_large_dataset(spark, DATASET_CONFIG["large_dataset_size"])
     
-    logger.info(f"Created DataFrames: employees({employees_df.count()} rows), "
-                f"departments({departments_df.count()} rows), "
-                f"projects({projects_df.count()} rows), "
-                f"large_dataset({large_df.count()} rows)")
+    logger.info("Created DataFrames: employees, departments, projects, large_dataset")
     
     return employees_df, departments_df, projects_df, large_df
 
