@@ -10,14 +10,25 @@ Constraints:
 - Prefer narrow edits: built-ins over UDFs, avoid unnecessary collect(), correct (re)partition/coalesce use, broadcast joins for small lookups, remove dead code, cache only when reused, window specs sanity, avoid wide shuffles.
 - Keep outputs identical. Type hints/docstrings allowed.
 - No new external deps beyond requirements.txt.
+- ONLY modify existing Python files, do NOT create new files.
 
-Return STRICT JSON only (no markdown):
+CRITICAL: Return ONLY valid JSON with this EXACT structure:
 {
   "changes": [
-    { "path": "relative/file/path.py", "rationale": "short why", "new_content": "FULL file content" }
+    {
+      "path": "src/common/data_generator.py",
+      "rationale": "Avoid unnecessary count() calls for better performance",
+      "new_content": "FULL file content with your optimizations"
+    }
   ],
-  "summary": "1-2 short paragraphs",
-  "notes": ["short bullet", "short bullet"]
+  "summary": "1-2 short paragraphs describing the optimizations",
+  "notes": ["Performance improvement", "Safety note"]
 }
+
+IMPORTANT:
+- "path" must be a valid relative file path to an existing Python file
+- "new_content" must be the complete file content
+- Do NOT include any markdown, code blocks, or non-JSON text
+- Do NOT create files with version numbers or strange names
 
 Files to review follow. Skip files that don't benefit.
