@@ -1,5 +1,15 @@
 -- Deliberately poorly performing query with multiple anti-patterns
 -- This query demonstrates what NOT to do for performance
+WITH filtered_employees AS (
+    SELECT * FROM employees
+    WHERE salary > 50000
+      AND LENGTH(name) > 5
+      AND department IN ('Engineering', 'Marketing', 'Sales')
+),
+filtered_departments AS (
+    SELECT * FROM departments
+    WHERE category IN ('Tech', 'Business')
+)
 SELECT 
     e1.id as emp1_id,
     e1.name as emp1_name,
@@ -36,32 +46,20 @@ SELECT
     END as department_comparison,
     CONCAT(e1.name, ' | ', e2.name, ' | ', e3.name) as all_names,
     CONCAT(d1.manager, ' | ', d2.manager, ' | ', d3.manager) as all_managers
-FROM employees e1
-CROSS JOIN employees e2
-CROSS JOIN employees e3
-CROSS JOIN departments d1
-CROSS JOIN departments d2
-CROSS JOIN departments d3
+FROM filtered_employees e1
+CROSS JOIN filtered_employees e2
+CROSS JOIN filtered_employees e3
+CROSS JOIN filtered_departments d1
+CROSS JOIN filtered_departments d2
+CROSS JOIN filtered_departments d3
 WHERE e1.id != e2.id 
     AND e2.id != e3.id 
     AND e1.id != e3.id
     AND e1.department = d1.dept_name
     AND e2.department = d2.dept_name
     AND e3.department = d3.dept_name
-    AND e1.salary > 50000
-    AND e2.salary > 50000
-    AND e3.salary > 50000
     AND (e1.salary + e2.salary + e3.salary) > 200000
     AND (e1.salary * e2.salary * e3.salary) > 1000000000000
-    AND LENGTH(e1.name) > 5
-    AND LENGTH(e2.name) > 5
-    AND LENGTH(e3.name) > 5
-    AND e1.department IN ('Engineering', 'Marketing', 'Sales')
-    AND e2.department IN ('Engineering', 'Marketing', 'Sales')
-    AND e3.department IN ('Engineering', 'Marketing', 'Sales')
-    AND d1.category IN ('Tech', 'Business')
-    AND d2.category IN ('Tech', 'Business')
-    AND d3.category IN ('Tech', 'Business')
 ORDER BY 
     (e1.salary + e2.salary + e3.salary) DESC,
     (e1.salary * e2.salary * e3.salary) DESC,
