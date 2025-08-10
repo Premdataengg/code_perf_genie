@@ -1,11 +1,10 @@
 -- BEST PRACTICE 1: Proper Partitioning Strategy
 -- Demonstrates efficient partitioning and filtering for better performance
 
--- Create partitioned view with proper filtering
+-- Create partitioned view with proper filtering and column pruning
 WITH partitioned_data AS (
     SELECT 
         employee_id,
-        project_id,
         amount,
         department,
         transaction_id,
@@ -32,7 +31,7 @@ WITH partitioned_data AS (
     AND employee_id <= 100
 )
 
--- Efficient aggregation with proper partitioning
+-- Efficient aggregation with proper partitioning and column pruning
 SELECT 
     department,
     employee_id,
