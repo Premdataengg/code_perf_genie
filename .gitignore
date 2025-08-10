@@ -132,6 +132,9 @@ dmypy.json
 spark-warehouse/
 metastore_db/
 derby.log
+spark-*.tgz
+spark-*-bin-*
+*.tgz
 
 # Application specific
 logs/*.log

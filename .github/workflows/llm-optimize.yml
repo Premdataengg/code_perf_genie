@@ -54,6 +54,9 @@ jobs:
             echo "SPARK_HOME=/opt/spark" >> $GITHUB_ENV
             echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
             echo "$SPARK_HOME/bin" >> $GITHUB_PATH
+            
+            # Clean up downloaded files
+            rm -f spark-${SPARK_VER}-bin-hadoop3.tgz
           fi
 
       - name: Install Python dependencies
@@ -85,16 +88,54 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Clean up large files
+        run: |
+          # Remove Spark binary files and other unwanted files before committing
+          find . -name "spark-*.tgz" -type f -delete || true
+          find . -name "spark-*-bin-*" -type d -exec rm -rf {} + || true
+          find . -name "*.tgz" -type f -delete || true
+          
+          # Remove any files larger than 50MB (safety check)
+          find . -type f -size +50M -delete || true
+          
+          # Clean up any temporary files
+          find . -name "*.tmp" -type f -delete || true
+          find . -name "*.temp" -type f -delete || true
+          
+          echo "Cleanup completed."
+
       - name: Commit changes (if any)
         id: commit
         run: |
+          
+          # Check if there are any meaningful changes to commit
+          # Only commit Python files, markdown files, and configuration files
           if [ -n "$(git status --porcelain)" ]; then
             BR="llm-optimize-$(date +%Y%m%d)"
             git checkout -b "$BR"
-            git add -A
-            git commit -m "LLM: daily Spark optimizations"
-            git push --set-upstream origin "$BR"
-            echo "branch=$BR" >> "$GITHUB_OUTPUT"
+            
+            # Only add specific file types that should be committed
+            git add "*.py" "*.md" "*.yml" "*.yaml" "*.json" "*.txt" "*.cfg" "*.ini" || true
+            
+            # Check if there are any staged changes
+            if [ -n "$(git diff --cached --name-only)" ]; then
+              # Final safety check - ensure no large files are being committed
+              LARGE_FILES=$(find . -type f -size +10M | head -5)
+              if [ -n "$LARGE_FILES" ]; then
+                echo "⚠️ Warning: Large files detected:"
+                echo "$LARGE_FILES"
+                echo "Skipping commit to avoid large file issues."
+                echo "branch=" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              
+              git commit -m "LLM: daily Spark optimizations"
+              git push --set-upstream origin "$BR"
+              echo "branch=$BR" >> "$GITHUB_OUTPUT"
+            else
+              echo "branch=" >> "$GITHUB_OUTPUT"
+              echo "No meaningful changes to commit."
+            fi
           else
             echo "branch=" >> "$GITHUB_OUTPUT"
             echo "No changes to commit."
