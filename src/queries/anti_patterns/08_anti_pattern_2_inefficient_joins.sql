@@ -24,7 +24,7 @@ SELECT
         ELSE 'High Transaction'
     END as value_category
 FROM employees e
-JOIN departments d ON e.department = d.dept_name
+JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name
 JOIN projects p ON e.department = p.department
 JOIN large_dataset l ON e.id = l.employee_id
 WHERE e.salary > 60000
