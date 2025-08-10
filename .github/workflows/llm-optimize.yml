@@ -16,11 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
+        with:
+          python-version: "3.11"
 
       - name: Install Java & Spark (local mode tests)
         run: |
@@ -62,6 +64,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Commit changes (if any)
+        id: commit
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             BR="llm-optimize-$(date +%Y%m%d)"
@@ -69,22 +72,24 @@ jobs:
             git add -A
             git commit -m "LLM: daily Spark optimizations"
             git push --set-upstream origin "$BR"
-            echo "BRANCH=$BR" >> $GITHUB_ENV
+            echo "branch=$BR" >> "$GITHUB_OUTPUT"
           else
+            echo "branch=" >> "$GITHUB_OUTPUT"
             echo "No changes to commit."
           fi
 
       - name: Open PR (if branch exists)
-        if: env.BRANCH != ''
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        if: steps.commit.outputs.branch != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          REPO="${GITHUB_REPOSITORY}"
           TITLE="LLM: Daily Spark optimizations ($(date +%Y-%m-%d))"
-          BODY="$(cat llm_pr_body.md 2>/dev/null || echo 'Automated daily optimization suggestions.')"
-          jq -n --arg title "$TITLE" --arg head "$BRANCH" --arg base "main" --arg body "$BODY" \
-            '{title:$title, head:$head, base:$base, body:$body}' > pr.json
-          curl -s -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$REPO/pulls" \
-            -d @pr.json
+          BODY_FILE="llm_pr_body.md"
+          if [ ! -f "$BODY_FILE" ]; then
+            echo "Automated daily optimization suggestions." > "$BODY_FILE"
+          fi
+          gh pr create \
+            --base main \
+            --head "${{ steps.commit.outputs.branch }}" \
+            --title "$TITLE" \
+            --body-file "$BODY_FILE"
