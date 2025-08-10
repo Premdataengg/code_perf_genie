@@ -112,10 +112,10 @@ def create_sample_dataframes(spark: SparkSession) -> Tuple[DataFrame, DataFrame,
     # Create large dataset for performance testing
     large_df = generate_large_dataset(spark, DATASET_CONFIG["large_dataset_size"])
     
-    logger.info(f"Created DataFrames: employees({employees_df.count()} rows), "
-                f"departments({departments_df.count()} rows), "
-                f"projects({projects_df.count()} rows), "
-                f"large_dataset({large_df.count()} rows)")
+    logger.info(f"Created DataFrames: employees({len(employees_df.columns)} cols), "
+                f"departments({len(departments_df.columns)} cols), "
+                f"projects({len(projects_df.columns)} cols), "
+                f"large_dataset({len(large_df.columns)} cols)")
     
     return employees_df, departments_df, projects_df, large_df
 
@@ -212,6 +212,6 @@ def cache_dataframe(df: DataFrame, name: str) -> DataFrame:
     """
     logger.info(f"Caching DataFrame: {name}")
     cached_df = df.cache()
-    cached_df.count()  # Trigger caching
-    logger.info(f"Cached DataFrame: {name} ({cached_df.count()} rows)")
+    # Only trigger caching if the DataFrame will be reused; do not call count() here
+    logger.info(f"Cached DataFrame: {name}")
     return cached_df
