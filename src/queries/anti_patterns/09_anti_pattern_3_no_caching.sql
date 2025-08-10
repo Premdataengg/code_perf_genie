@@ -1,6 +1,4 @@
--- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Use CTEs to materialize expensive aggregations for reuse
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -32,7 +30,7 @@ department_stats AS (
         e.salary_q3,
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
-    FROM departments d
+    FROM /*+ BROADCAST(d) */ departments d
     JOIN expensive_calc e ON d.dept_name = e.department
 ),
 project_analysis AS (

@@ -1,6 +1,4 @@
--- ANTI-PATTERN 2: Inefficient Join Strategy
--- This query violates the best practice of join optimization
--- Problem: Multiple large table joins without proper join order or broadcast hints
+-- Optimized: Broadcast join for small dimension tables and filter pushdown
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -24,7 +22,7 @@ SELECT
         ELSE 'High Transaction'
     END as value_category
 FROM employees e
-JOIN departments d ON e.department = d.dept_name
+JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name
 JOIN projects p ON e.department = p.department
 JOIN large_dataset l ON e.id = l.employee_id
 WHERE e.salary > 60000

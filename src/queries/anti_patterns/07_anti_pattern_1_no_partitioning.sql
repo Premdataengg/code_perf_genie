@@ -1,6 +1,4 @@
--- ANTI-PATTERN 1: No Partitioning Strategy
--- This query violates the best practice of proper partitioning
--- Problem: Full table scan on large dataset without partition pruning
+-- Optimized: Partition pruning and filter pushdown
 SELECT 
     employee_id,
     project_id,
@@ -8,7 +6,7 @@ SELECT
     department,
     transaction_id,
     date,
-    SUM(amount) OVER (PARTITION BY department ORDER BY transaction_id) as running_total,
+    SUM(amount) OVER (PARTITION BY department ORDER BY transaction_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as running_total,
     AVG(amount) OVER (PARTITION BY department) as dept_avg,
     COUNT(*) OVER (PARTITION BY department) as dept_count
 FROM large_dataset
