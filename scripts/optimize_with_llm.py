@@ -2,7 +2,13 @@ import os, sys, json, datetime, subprocess
 from pathlib import Path
 from typing import List, Dict
 
-INCLUDE_GLOBS = ["main.py", "common.py", "src/**/*.py"]
+INCLUDE_GLOBS = [
+    "src/queries/**/*.sql",  # Prioritize SQL files first
+    "src/queries/**/*.py",   # Then Python files in queries
+    "src/**/*.py",           # Then other Python files
+    "main.py", 
+    "common.py"
+]
 EXCLUDE_DIRS = {".git", ".github", ".venv", "venv", "node_modules", "build", "dist", "__pycache__", "logs", "data/generated"}
 MAX_FILES = 10
 LOOKBACK_HOURS = 36
@@ -36,22 +42,42 @@ def ok_path(p: Path) -> bool:
 def collect_files() -> List[Path]:
     files: List[Path] = []
     recent = changed_files_within(LOOKBACK_HOURS)
-    globs = []
-    for g in INCLUDE_GLOBS: globs.extend(Path(".").glob(g))
+    
+    # Collect all matching files with priority ordering
+    all_files = []
+    for g in INCLUDE_GLOBS:
+        all_files.extend(Path(".").glob(g))
+    
+    # Sort files by priority: SQL files first, then Python files
+    def file_priority(p: Path) -> int:
+        if p.suffix == '.sql':
+            return 0  # Highest priority
+        elif 'queries' in p.parts:
+            return 1  # Second priority
+        elif p.suffix == '.py':
+            return 2  # Third priority
+        else:
+            return 3  # Lowest priority
+    
+    all_files.sort(key=file_priority)
 
     def add(p):
-        if ok_path(p) and p not in files: files.append(p)
+        if ok_path(p) and p not in files: 
+            files.append(p)
 
+    # First add recent files (they have highest priority)
     for p in recent:
         for g in INCLUDE_GLOBS:
             if p.match(g):
                 add(p)
                 if len(files) >= MAX_FILES: return files
 
+    # Then add other files in priority order
     if len(files) < MAX_FILES:
-        for p in globs:
+        for p in all_files:
             add(p)
             if len(files) >= MAX_FILES: break
+    
     return files
 
 def load_payload(paths: List[Path]) -> str:
