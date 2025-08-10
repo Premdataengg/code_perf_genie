@@ -19,7 +19,7 @@ def run(cmd: List[str], check=True) -> str:
     return res.stdout.strip()
 
 def changed_files_within(hours: int) -> List[Path]:
-    since = (datetime.datetime.utcnow() - datetime.timedelta(hours=hours)).isoformat() + "Z"
+    since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=hours)).isoformat()
     out = run(["git", "log", f'--since="{since}"', "--name-only", "--pretty=format:"], check=False)
     files = [Path(p.strip()) for p in out.splitlines() if p.strip()]
     seen = set(); out_paths = []

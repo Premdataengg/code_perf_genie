@@ -69,7 +69,18 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/optimize_with_llm.py
+        run: |
+          echo "Running LLM optimization..."
+          python scripts/optimize_with_llm.py
+          echo "LLM optimization completed."
+          
+          # Show what files exist after optimization
+          echo "Files in current directory:"
+          ls -la
+          
+          # Show git status
+          echo "Git status:"
+          git status
 
       - name: Run tests
         env:
@@ -109,13 +120,16 @@ jobs:
         run: |
           
           # Check if there are any meaningful changes to commit
-          # Only commit Python files, markdown files, and configuration files
           if [ -n "$(git status --porcelain)" ]; then
             BR="llm-optimize-$(date +%Y%m%d)"
             git checkout -b "$BR"
             
-            # Only add specific file types that should be committed
-            git add "*.py" "*.md" "*.yml" "*.yaml" "*.json" "*.txt" "*.cfg" "*.ini" || true
+            # Show what files have been modified
+            echo "Modified files:"
+            git status --porcelain
+            
+            # Add all modified files that are not in .gitignore
+            git add .
             
             # Check if there are any staged changes
             if [ -n "$(git diff --cached --name-only)" ]; then
@@ -128,6 +142,9 @@ jobs:
                 echo "branch=" >> "$GITHUB_OUTPUT"
                 exit 0
               fi
+              
+              echo "Staged files for commit:"
+              git diff --cached --name-only
               
               git commit -m "LLM: daily Spark optimizations"
               git push --set-upstream origin "$BR"
