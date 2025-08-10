@@ -1,0 +1,90 @@
+name: Daily Spark Optimization
+
+on:
+  schedule:
+    - cron: "30 11 * * *"   # daily 11:30 UTC ≈ 7:30 AM ET
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install Java & Spark (local mode tests)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk wget
+          SPARK_VER=3.5.0
+          wget https://downloads.apache.org/spark/spark-${SPARK_VER}/spark-${SPARK_VER}-bin-hadoop3.tgz
+          tar xf spark-${SPARK_VER}-bin-hadoop3.tgz
+          sudo mv spark-${SPARK_VER}-bin-hadoop3 /opt/spark
+          echo "SPARK_HOME=/opt/spark" >> $GITHUB_ENV
+          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+          echo "$SPARK_HOME/bin" >> $GITHUB_PATH
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install openai>=1.35.0 tiktoken>=0.7.0 pygithub>=2.3.0
+
+      - name: Run LLM optimization
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/optimize_with_llm.py
+
+      - name: Run tests (PySpark local[*])
+        env:
+          PYSPARK_PYTHON: python
+        run: |
+          if [ -d "tests" ]; then
+            python -m pytest -q
+          else
+            echo "No tests found; skipping."
+          fi
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit changes (if any)
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            BR="llm-optimize-$(date +%Y%m%d)"
+            git checkout -b "$BR"
+            git add -A
+            git commit -m "LLM: daily Spark optimizations"
+            git push --set-upstream origin "$BR"
+            echo "BRANCH=$BR" >> $GITHUB_ENV
+          else
+            echo "No changes to commit."
+          fi
+
+      - name: Open PR (if branch exists)
+        if: env.BRANCH != ''
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          REPO="${GITHUB_REPOSITORY}"
+          TITLE="LLM: Daily Spark optimizations ($(date +%Y-%m-%d))"
+          BODY="$(cat llm_pr_body.md 2>/dev/null || echo 'Automated daily optimization suggestions.')"
+          jq -n --arg title "$TITLE" --arg head "$BRANCH" --arg base "main" --arg body "$BODY" \
+            '{title:$title, head:$head, base:$base, body:$body}' > pr.json
+          curl -s -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/pulls" \
+            -d @pr.json
