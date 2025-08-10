@@ -4,3 +4,4 @@ SELECT name, department, salary,
        ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) as row_num
 FROM employees
 ORDER BY department, salary DESC
+LIMIT 1000

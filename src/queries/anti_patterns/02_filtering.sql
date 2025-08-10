@@ -1,5 +1,6 @@
 -- Filtering with WHERE clause
-SELECT name, salary 
-FROM employees 
-WHERE department = 'Engineering' 
+SELECT name, salary
+FROM employees
+WHERE department = 'Engineering'
 ORDER BY salary DESC
+LIMIT 1000
