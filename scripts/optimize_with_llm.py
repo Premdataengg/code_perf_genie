@@ -10,7 +10,7 @@ INCLUDE_GLOBS = [
     "common.py"
 ]
 EXCLUDE_DIRS = {".git", ".github", ".venv", "venv", "node_modules", "build", "dist", "__pycache__", "logs", "data/generated"}
-MAX_FILES = 10
+MAX_FILES = 15  # Increased to ensure more anti-pattern files are included
 LOOKBACK_HOURS = 36
 MODEL = "gpt-4.1"
 PROMPT_PATH = Path("scripts/prompt_template.txt")
@@ -48,16 +48,21 @@ def collect_files() -> List[Path]:
     for g in INCLUDE_GLOBS:
         all_files.extend(Path(".").glob(g))
     
-    # Sort files by priority: SQL files first, then Python files
+    # Sort files by priority: Anti-pattern SQL files first, then other SQL files, then Python files
     def file_priority(p: Path) -> int:
         if p.suffix == '.sql':
-            return 0  # Highest priority
+            if 'anti_patterns' in p.parts:
+                return 0  # Highest priority - anti-patterns first
+            elif 'best_practices' in p.parts:
+                return 1  # Second priority - best practices
+            else:
+                return 2  # Third priority - other SQL files
         elif 'queries' in p.parts:
-            return 1  # Second priority
+            return 3  # Fourth priority - Python files in queries
         elif p.suffix == '.py':
-            return 2  # Third priority
+            return 4  # Fifth priority - other Python files
         else:
-            return 3  # Lowest priority
+            return 5  # Lowest priority
     
     all_files.sort(key=file_priority)
 
@@ -65,18 +70,23 @@ def collect_files() -> List[Path]:
         if ok_path(p) and p not in files: 
             files.append(p)
 
-    # First add recent files (they have highest priority)
+    # Collect all files (recent + all) and sort by priority
+    candidate_files = []
+    
+    # Add recent files
     for p in recent:
         for g in INCLUDE_GLOBS:
-            if p.match(g):
-                add(p)
-                if len(files) >= MAX_FILES: return files
-
-    # Then add other files in priority order
-    if len(files) < MAX_FILES:
-        for p in all_files:
-            add(p)
-            if len(files) >= MAX_FILES: break
+            if p.match(g) and ok_path(p):
+                candidate_files.append(p)
+    
+    # Add all other files
+    for p in all_files:
+        if ok_path(p) and p not in candidate_files:
+            candidate_files.append(p)
+    
+    # Sort by priority and take the top MAX_FILES
+    candidate_files.sort(key=file_priority)
+    files = candidate_files[:MAX_FILES]
     
     return files
 

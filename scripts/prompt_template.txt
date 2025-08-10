@@ -9,8 +9,15 @@ Repo context:
 - Best practices in src/queries/best_practices/* - enhance existing optimizations.
 
 PRIORITY FOCUS AREAS (in order):
-1. **Spark SQL Query Optimization**: 
-   - Optimize SQL queries in src/queries/anti_patterns/* and src/queries/best_practices/*
+1. **Anti-Pattern Optimization (HIGHEST PRIORITY)**: 
+   - Focus FIRST on src/queries/anti_patterns/* files
+   - Convert inefficient anti-patterns to optimized versions
+   - Fix performance issues in anti-pattern queries
+   - Create optimized versions of problematic queries
+   - This is your PRIMARY focus - anti-patterns need the most attention
+
+2. **Spark SQL Query Optimization**: 
+   - Optimize SQL queries in src/queries/best_practices/*
    - Improve JOIN strategies (broadcast joins, sort-merge joins)
    - Optimize aggregations and window functions
    - Fix partitioning and bucketing issues
@@ -89,9 +96,12 @@ CRITICAL: Return ONLY valid JSON with this EXACT structure:
 IMPORTANT:
 - "path" must be a valid relative file path to an existing file
 - "new_content" must be the complete file content
-- Focus on SQL files first, then Python files
+- **CRITICAL**: Focus on anti-pattern files FIRST (src/queries/anti_patterns/*)
+- Anti-pattern files contain deliberately inefficient queries that need optimization
+- Convert anti-patterns to efficient, optimized versions
+- Then focus on best practices files, then other SQL files, then Python files
 - Do NOT include any markdown, code blocks, or non-JSON text
 - Do NOT create files with version numbers or strange names
 - Prioritize Spark SQL query optimizations over general code improvements
 
-Files to review follow. Focus on SQL files in src/queries/ first, then optimize Python files.
+Files to review follow. **PRIORITIZE anti-pattern files first**, then best practices, then other files.
