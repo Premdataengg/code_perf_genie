@@ -5,5 +5,6 @@ SELECT department,
        MAX(salary) as max_salary,
        MIN(salary) as min_salary
 FROM employees 
+WHERE department IS NOT NULL
 GROUP BY department 
 ORDER BY avg_salary DESC
