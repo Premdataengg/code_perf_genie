@@ -37,14 +37,14 @@ department_stats AS (
 ),
 project_analysis AS (
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
 )
 SELECT 
     ds.dept_name,
