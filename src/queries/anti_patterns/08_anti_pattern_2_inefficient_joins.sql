@@ -25,7 +25,7 @@ SELECT
     END as value_category
 FROM employees e
 JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
+JOIN /*+ BROADCAST(p) */ projects p ON e.department = p.department
 JOIN large_dataset l ON e.id = l.employee_id
 WHERE e.salary > 60000
     AND p.budget > 50000
