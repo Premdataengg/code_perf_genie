@@ -1,6 +1,18 @@
 -- ANTI-PATTERN 2: Inefficient Join Strategy
 -- This query violates the best practice of join optimization
 -- Problem: Multiple large table joins without proper join order or broadcast hints
+WITH filtered_employees AS (
+    SELECT * FROM employees WHERE salary > 60000
+),
+filtered_projects AS (
+    SELECT * FROM projects WHERE budget > 50000 AND start_date >= '2024-01-01' AND end_date <= '2024-12-31'
+),
+filtered_large_dataset AS (
+    SELECT * FROM large_dataset WHERE amount > 10000
+),
+filtered_departments AS (
+    SELECT * FROM departments WHERE category IN ('Tech', 'Business')
+)
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -23,14 +35,8 @@ SELECT
         WHEN p.budget > l.amount THEN 'High Budget'
         ELSE 'High Transaction'
     END as value_category
-FROM employees e
-JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 60000
-    AND p.budget > 50000
-    AND l.amount > 10000
-    AND d.category IN ('Tech', 'Business')
-    AND p.start_date >= '2024-01-01'
-    AND p.end_date <= '2024-12-31'
+FROM filtered_employees e
+JOIN /*+ BROADCAST(d) */ filtered_departments d ON e.department = d.dept_name
+JOIN filtered_projects p ON e.department = p.department
+JOIN filtered_large_dataset l ON e.id = l.employee_id
 ORDER BY total_value DESC, employee_name
