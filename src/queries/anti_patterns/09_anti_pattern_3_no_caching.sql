@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimization: Materialize expensive_calc as a CTE to avoid recomputation
 WITH expensive_calc AS (
     SELECT 
         department,

@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 1: No Partitioning Strategy
 -- This query violates the best practice of proper partitioning
 -- Problem: Full table scan on large dataset without partition pruning
+-- Optimization: Ensure partitionable filters are pushed down for partition pruning
 WITH filtered_large_dataset AS (
     SELECT * FROM large_dataset
     WHERE amount > 1000 
