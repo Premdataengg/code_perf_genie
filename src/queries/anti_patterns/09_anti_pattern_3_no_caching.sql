@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Indicate caching of expensive intermediate results for reuse
+-- In Spark SQL, use CACHE TABLE or DataFrame.cache() in PySpark for these CTEs
+-- CACHE TABLE expensive_calc; CACHE TABLE project_analysis;
 WITH expensive_calc AS (
     SELECT 
         department,
