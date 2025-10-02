@@ -1,5 +1,20 @@
--- Deliberately poorly performing query with multiple anti-patterns
--- This query demonstrates what NOT to do for performance
+-- Deliberately poorly performing query with multiple anti-patterns (Optimized)
+-- Optimization: Prune columns in subqueries, filter early, avoid SELECT *
+WITH filtered_e1 AS (
+    SELECT id, name, department, salary
+    FROM employees
+    WHERE salary > 50000 AND LENGTH(name) > 5 AND department IN ('Engineering', 'Marketing', 'Sales')
+),
+filtered_e2 AS (
+    SELECT id, name, department, salary
+    FROM employees
+    WHERE salary > 50000 AND LENGTH(name) > 5 AND department IN ('Engineering', 'Marketing', 'Sales')
+),
+filtered_e3 AS (
+    SELECT id, name, department, salary
+    FROM employees
+    WHERE salary > 50000 AND LENGTH(name) > 5 AND department IN ('Engineering', 'Marketing', 'Sales')
+)
 SELECT 
     e1.id as emp1_id,
     e1.name as emp1_name,
@@ -37,11 +52,11 @@ SELECT
     CONCAT(e1.name, ' | ', e2.name, ' | ', e3.name) as all_names,
     CONCAT(d1.manager, ' | ', d2.manager, ' | ', d3.manager) as all_managers
 FROM 
-    (SELECT * FROM employees WHERE salary > 50000 AND LENGTH(name) > 5 AND department IN ('Engineering', 'Marketing', 'Sales')) e1
+    filtered_e1 e1
 JOIN 
-    (SELECT * FROM employees WHERE salary > 50000 AND LENGTH(name) > 5 AND department IN ('Engineering', 'Marketing', 'Sales')) e2 ON e1.id != e2.id
+    filtered_e2 e2 ON e1.id != e2.id
 JOIN 
-    (SELECT * FROM employees WHERE salary > 50000 AND LENGTH(name) > 5 AND department IN ('Engineering', 'Marketing', 'Sales')) e3 ON e1.id != e3.id AND e2.id != e3.id
+    filtered_e3 e3 ON e1.id != e3.id AND e2.id != e3.id
 JOIN /*+ BROADCAST(d1) */ departments d1 ON e1.department = d1.dept_name AND d1.category IN ('Tech', 'Business')
 JOIN /*+ BROADCAST(d2) */ departments d2 ON e2.department = d2.dept_name AND d2.category IN ('Tech', 'Business')
 JOIN /*+ BROADCAST(d3) */ departments d3 ON e3.department = d3.dept_name AND d3.category IN ('Tech', 'Business')
