@@ -1,20 +1,19 @@
 ## Daily Spark Optimization
 
 **Summary**
-Optimized anti-pattern queries by pruning columns, adding broadcast hints, pushing down filters, and restructuring joins to reduce data shuffling and improve partition pruning.
+Optimized anti-pattern SQL files by applying partition pruning, predicate pushdown, join and aggregation best practices, and simulated caching for expensive CTEs.
 
 **Files updated**
-- `src/queries/anti_patterns/01_basic_select.sql`
-- `src/queries/anti_patterns/04_join.sql`
-- `src/queries/anti_patterns/06_performance_anti_pattern.sql`
 - `src/queries/anti_patterns/07_anti_pattern_1_no_partitioning.sql`
 - `src/queries/anti_patterns/08_anti_pattern_2_inefficient_joins.sql`
+- `src/queries/anti_patterns/09_anti_pattern_3_no_caching.sql`
+- `src/queries/anti_patterns/10_anti_pattern_4_inefficient_aggregations.sql`
 
 
 **Notes**
-- Column pruning and explicit column selection reduce unnecessary data transfer.
-- Broadcast hints and join reordering minimize shuffle and improve join efficiency.
-- Filter pushdown enables partition pruning and avoids full table scans.
-- Replacing CROSS JOINs with filtered JOINs prevents cartesian explosion.
+- Partition pruning and column pruning reduce data scanned and shuffled.
+- Join order and predicate pushdown minimize unnecessary computation and improve join efficiency.
+- Materializing CTEs simulates caching to avoid recomputation.
+- Precomputing aggregations and minimizing window partitions reduces redundant calculations and improves performance.
 
 > This PR was generated automatically. Please run tests and review carefully.
