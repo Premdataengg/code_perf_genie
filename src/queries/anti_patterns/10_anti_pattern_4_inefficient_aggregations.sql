@@ -45,12 +45,14 @@ SELECT
     SUM(CASE WHEN p.budget > 80000 THEN p.budget ELSE 0 END) OVER (PARTITION BY p.department) as dept_high_budget_sum,
     COUNT(CASE WHEN e.salary > 70000 THEN 1 END) OVER (PARTITION BY e.department) as dept_high_salary_count,
     COUNT(CASE WHEN p.budget > 80000 THEN 1 END) OVER (PARTITION BY p.department) as dept_high_budget_count
-FROM employees e
-JOIN departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 50000
-    AND p.budget > 30000
-    AND l.amount > 5000
-    AND d.category IN ('Tech', 'Business')
+FROM (
+    SELECT * FROM employees WHERE salary > 50000
+) e
+JOIN departments d ON e.department = d.dept_name AND d.category IN ('Tech', 'Business')
+JOIN (
+    SELECT * FROM projects WHERE budget > 30000
+) p ON e.department = p.department
+JOIN (
+    SELECT * FROM large_dataset WHERE amount > 5000
+) l ON e.id = l.employee_id
 ORDER BY e.salary DESC, p.budget DESC, l.amount DESC
