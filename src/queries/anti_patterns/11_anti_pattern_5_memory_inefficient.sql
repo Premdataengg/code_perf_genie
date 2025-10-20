@@ -72,14 +72,14 @@ SELECT
         ' | Budget: $', CAST(p.budget AS STRING),
         ' | Transaction: $', CAST(l.amount AS STRING)
     ) as full_details
-FROM employees e
-JOIN departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 50000
-    AND p.budget > 30000
-    AND l.amount > 5000
-    AND d.category IN ('Tech', 'Business')
-    AND LENGTH(e.name) > 5
-    AND LENGTH(p.project_name) > 10
+FROM (
+    SELECT * FROM employees WHERE salary > 50000 AND LENGTH(name) > 5
+) e
+JOIN departments d ON e.department = d.dept_name AND d.category IN ('Tech', 'Business')
+JOIN (
+    SELECT * FROM projects WHERE budget > 30000 AND LENGTH(project_name) > 10
+) p ON e.department = p.department
+JOIN (
+    SELECT * FROM large_dataset WHERE amount > 5000
+) l ON e.id = l.employee_id
 ORDER BY e.salary DESC, p.budget DESC, l.amount DESC
