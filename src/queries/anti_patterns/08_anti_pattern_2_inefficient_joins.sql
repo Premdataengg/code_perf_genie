@@ -1,6 +1,5 @@
 -- ANTI-PATTERN 2: Inefficient Join Strategy
--- This query violates the best practice of join optimization
--- Problem: Multiple large table joins without proper join order or broadcast hints
+-- Optimized: Reorder joins for early filtering, push down predicates, and broadcast small tables
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -23,14 +22,14 @@ SELECT
         WHEN p.budget > l.amount THEN 'High Budget'
         ELSE 'High Transaction'
     END as value_category
-FROM employees e
-JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 60000
-    AND p.budget > 50000
-    AND l.amount > 10000
-    AND d.category IN ('Tech', 'Business')
-    AND p.start_date >= '2024-01-01'
-    AND p.end_date <= '2024-12-31'
+FROM (
+    SELECT * FROM employees WHERE salary > 60000
+) e
+JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name AND d.category IN ('Tech', 'Business')
+JOIN (
+    SELECT * FROM projects WHERE budget > 50000 AND start_date >= '2024-01-01' AND end_date <= '2024-12-31'
+) p ON e.department = p.department
+JOIN (
+    SELECT * FROM large_dataset WHERE amount > 10000
+) l ON e.id = l.employee_id
 ORDER BY total_value DESC, employee_name
