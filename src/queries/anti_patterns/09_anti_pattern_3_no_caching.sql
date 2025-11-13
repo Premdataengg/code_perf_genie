@@ -1,8 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Use CACHED hint for expensive_calc and project_analysis to avoid recomputation
 WITH expensive_calc AS (
-    SELECT 
+    SELECT /*+ CACHED */
         department,
         AVG(salary) as avg_salary,
         SUM(salary) as total_salary,
@@ -36,7 +35,7 @@ department_stats AS (
     JOIN expensive_calc e ON d.dept_name = e.department
 ),
 project_analysis AS (
-    SELECT 
+    SELECT /*+ CACHED */
         p.department,
         AVG(p.budget) as avg_budget,
         SUM(p.budget) as total_budget,
