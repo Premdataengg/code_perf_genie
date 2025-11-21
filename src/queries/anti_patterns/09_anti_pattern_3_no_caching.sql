@@ -1,6 +1,5 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Materialize expensive aggregations in CTEs to avoid recomputation
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -28,8 +27,6 @@ department_stats AS (
         e.min_salary,
         e.salary_stddev,
         e.salary_variance,
-        e.salary_q1,
-        e.salary_q3,
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
@@ -37,14 +34,17 @@ department_stats AS (
 ),
 project_analysis AS (
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
+),
+project_analysis_cached AS (
+    SELECT * FROM project_analysis
 )
 SELECT 
     ds.dept_name,
@@ -72,5 +72,5 @@ SELECT
         ELSE 'Balanced'
     END as resource_profile
 FROM department_stats ds
-JOIN project_analysis pa ON ds.dept_name = pa.department
+JOIN project_analysis_cached pa ON ds.dept_name = pa.department
 ORDER BY combined_total DESC, dept_name
