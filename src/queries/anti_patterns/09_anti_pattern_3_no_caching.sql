@@ -1,6 +1,5 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Materialize expensive_calc and project_analysis CTEs only once to avoid recomputation
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -37,14 +36,14 @@ department_stats AS (
 ),
 project_analysis AS (
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
 )
 SELECT 
     ds.dept_name,
