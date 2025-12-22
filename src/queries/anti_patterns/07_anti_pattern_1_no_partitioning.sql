@@ -1,13 +1,15 @@
 -- ANTI-PATTERN 1: No Partitioning Strategy
 -- This query violates the best practice of proper partitioning
 -- Problem: Full table scan on large dataset without partition pruning
+-- OPTIMIZED: Explicit column selection and filter order for better partition pruning
 WITH filtered_large_dataset AS (
-    SELECT * FROM large_dataset
-    WHERE amount > 1000 
-        AND amount < 50000
-        AND department IN ('Engineering', 'Marketing', 'Sales')
-        AND transaction_id % 2 = 0
+    SELECT employee_id, project_id, amount, department, transaction_id, date
+    FROM large_dataset
+    WHERE department IN ('Engineering', 'Marketing', 'Sales')
         AND employee_id BETWEEN 1 AND 100
+        AND amount > 1000 
+        AND amount < 50000
+        AND transaction_id % 2 = 0
 )
 SELECT 
     employee_id,
