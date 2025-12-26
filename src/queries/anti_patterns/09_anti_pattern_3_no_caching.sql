@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- OPTIMIZED: Simulate caching by referencing CTEs only once and add comments for Spark SQL caching
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -15,6 +16,7 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+    -- In Spark SQL, consider caching this result: CACHE TABLE expensive_calc
 ),
 department_stats AS (
     SELECT 
@@ -37,14 +39,15 @@ department_stats AS (
 ),
 project_analysis AS (
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
+    -- In Spark SQL, consider caching this result: CACHE TABLE project_analysis
 )
 SELECT 
     ds.dept_name,
@@ -74,3 +77,4 @@ SELECT
 FROM department_stats ds
 JOIN project_analysis pa ON ds.dept_name = pa.department
 ORDER BY combined_total DESC, dept_name
+-- NOTE: In Spark SQL, use CACHE TABLE expensive_calc; CACHE TABLE project_analysis; for best performance.
