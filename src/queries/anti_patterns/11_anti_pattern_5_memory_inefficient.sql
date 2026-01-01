@@ -1,6 +1,15 @@
 -- ANTI-PATTERN 5: Memory Inefficient Operations
 -- This query violates the best practice of memory-efficient operations
 -- Problem: Collecting large datasets, complex string operations, and inefficient data types
+WITH filtered_employees AS (
+    SELECT * FROM employees WHERE salary > 50000 AND LENGTH(name) > 5
+),
+filtered_projects AS (
+    SELECT * FROM projects WHERE budget > 30000 AND LENGTH(project_name) > 10
+),
+filtered_large_dataset AS (
+    SELECT employee_id, amount, transaction_id, date, department FROM large_dataset WHERE amount > 5000
+)
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -54,10 +63,10 @@ SELECT
         WHEN e.salary > 50000 AND p.budget > 40000 AND l.amount > 10000 THEN 'Bronze Tier'
         ELSE 'Standard Tier'
     END as overall_tier,
-    -- Expensive aggregations in subqueries
-    (SELECT AVG(salary) FROM employees WHERE department = e.department) as dept_avg_salary_subquery,
-    (SELECT MAX(budget) FROM projects WHERE department = p.department) as dept_max_budget_subquery,
-    (SELECT SUM(amount) FROM large_dataset WHERE employee_id = e.id) as employee_total_transactions_subquery,
+    -- Window functions for department/project/employee stats (replace subqueries)
+    AVG(e.salary) OVER (PARTITION BY e.department) as dept_avg_salary_subquery,
+    MAX(p.budget) OVER (PARTITION BY p.department) as dept_max_budget_subquery,
+    SUM(l.amount) OVER (PARTITION BY e.id) as employee_total_transactions_subquery,
     -- Complex mathematical operations
     POWER(e.salary, 2) as salary_squared,
     SQRT(p.budget) as budget_sqrt,
@@ -72,14 +81,8 @@ SELECT
         ' | Budget: $', CAST(p.budget AS STRING),
         ' | Transaction: $', CAST(l.amount AS STRING)
     ) as full_details
-FROM employees e
-JOIN departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 50000
-    AND p.budget > 30000
-    AND l.amount > 5000
-    AND d.category IN ('Tech', 'Business')
-    AND LENGTH(e.name) > 5
-    AND LENGTH(p.project_name) > 10
+FROM filtered_employees e
+JOIN departments d ON e.department = d.dept_name AND d.category IN ('Tech', 'Business')
+JOIN filtered_projects p ON e.department = p.department
+JOIN filtered_large_dataset l ON e.id = l.employee_id
 ORDER BY e.salary DESC, p.budget DESC, l.amount DESC
