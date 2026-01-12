@@ -1,5 +1,5 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
+-- OPTIMIZED: Use CTEs and encourage caching of expensive intermediate results
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
 WITH expensive_calc AS (
     SELECT 
@@ -15,6 +15,7 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+    -- Consider caching this CTE if reused multiple times
 ),
 department_stats AS (
     SELECT 
