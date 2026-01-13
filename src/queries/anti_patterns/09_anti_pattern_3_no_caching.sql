@@ -1,6 +1,6 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Indicate caching of expensive intermediate results for reuse
+-- In PySpark, cache/persist would be used on these CTEs
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -15,6 +15,7 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+    -- CACHE: This result should be cached for reuse
 ),
 department_stats AS (
     SELECT 
@@ -37,14 +38,15 @@ department_stats AS (
 ),
 project_analysis AS (
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
+    -- CACHE: This result should be cached for reuse
 )
 SELECT 
     ds.dept_name,
