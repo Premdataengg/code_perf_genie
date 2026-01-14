@@ -1,6 +1,5 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Use CTEs to avoid recomputation, predicate pushdown, column pruning
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -28,8 +27,6 @@ department_stats AS (
         e.min_salary,
         e.salary_stddev,
         e.salary_variance,
-        e.salary_q1,
-        e.salary_q3,
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
