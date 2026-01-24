@@ -1,6 +1,5 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Materialize expensive_calc and project_analysis to avoid recomputation (simulate caching)
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -15,6 +14,9 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+),
+materialized_expensive_calc AS (
+    SELECT * FROM expensive_calc
 ),
 department_stats AS (
     SELECT 
@@ -33,18 +35,21 @@ department_stats AS (
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
-    JOIN expensive_calc e ON d.dept_name = e.department
+    JOIN materialized_expensive_calc e ON d.dept_name = e.department
 ),
 project_analysis AS (
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
+),
+materialized_project_analysis AS (
+    SELECT * FROM project_analysis
 )
 SELECT 
     ds.dept_name,
@@ -72,5 +77,5 @@ SELECT
         ELSE 'Balanced'
     END as resource_profile
 FROM department_stats ds
-JOIN project_analysis pa ON ds.dept_name = pa.department
+JOIN materialized_project_analysis pa ON ds.dept_name = pa.department
 ORDER BY combined_total DESC, dept_name
