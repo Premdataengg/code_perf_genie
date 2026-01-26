@@ -1,7 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Indicate caching of expensive_calc and project_analysis to avoid recomputation
 WITH expensive_calc AS (
+    -- CACHE THIS CTE
     SELECT 
         department,
         AVG(salary) as avg_salary,
@@ -36,6 +36,7 @@ department_stats AS (
     JOIN expensive_calc e ON d.dept_name = e.department
 ),
 project_analysis AS (
+    -- CACHE THIS CTE
     SELECT 
         p.department,
         AVG(p.budget) as avg_budget,

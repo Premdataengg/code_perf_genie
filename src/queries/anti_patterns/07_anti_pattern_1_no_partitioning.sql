@@ -1,8 +1,8 @@
 -- ANTI-PATTERN 1: No Partitioning Strategy
--- This query violates the best practice of proper partitioning
--- Problem: Full table scan on large dataset without partition pruning
+-- Optimized: Apply column pruning and maximize partition pruning
 WITH filtered_large_dataset AS (
-    SELECT * FROM large_dataset
+    SELECT employee_id, project_id, amount, department, transaction_id, date
+    FROM large_dataset
     WHERE amount > 1000 
         AND amount < 50000
         AND department IN ('Engineering', 'Marketing', 'Sales')
@@ -21,3 +21,4 @@ SELECT
     COUNT(*) OVER (PARTITION BY department) as dept_count
 FROM filtered_large_dataset
 ORDER BY department, amount DESC
+LIMIT 100
