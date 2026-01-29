@@ -1,7 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Indicate caching of expensive_calc and project_analysis, prune columns early
 WITH expensive_calc AS (
+    -- CACHE THIS CTE FOR REUSE
     SELECT 
         department,
         AVG(salary) as avg_salary,
@@ -36,15 +36,16 @@ department_stats AS (
     JOIN expensive_calc e ON d.dept_name = e.department
 ),
 project_analysis AS (
+    -- CACHE THIS CTE FOR REUSE
     SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
+        department,
+        AVG(budget) as avg_budget,
+        SUM(budget) as total_budget,
         COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
+        MAX(budget) as max_budget,
+        MIN(budget) as min_budget
+    FROM projects
+    GROUP BY department
 )
 SELECT 
     ds.dept_name,
