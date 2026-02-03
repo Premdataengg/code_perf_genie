@@ -1,6 +1,6 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimized: Suggest caching expensive_calc and project_analysis for reuse
+-- In Spark SQL, use CACHE TABLE expensive_calc; and CACHE TABLE project_analysis; if running interactively
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -74,3 +74,4 @@ SELECT
 FROM department_stats ds
 JOIN project_analysis pa ON ds.dept_name = pa.department
 ORDER BY combined_total DESC, dept_name
+-- Suggestion: CACHE TABLE expensive_calc; CACHE TABLE project_analysis; in Spark SQL session
