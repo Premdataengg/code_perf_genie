@@ -1,22 +1,24 @@
 -- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
+-- OPTIMIZED: Cache expensive_calc to avoid recomputation
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
-WITH expensive_calc AS (
-    SELECT 
-        department,
-        AVG(salary) as avg_salary,
-        SUM(salary) as total_salary,
-        COUNT(*) as emp_count,
-        MAX(salary) as max_salary,
-        MIN(salary) as min_salary,
-        STDDEV(salary) as salary_stddev,
-        VARIANCE(salary) as salary_variance,
-        PERCENTILE(salary, 0.25) as salary_q1,
-        PERCENTILE(salary, 0.75) as salary_q3
-    FROM employees
-    GROUP BY department
-),
-department_stats AS (
+
+-- Step 1: Materialize expensive_calc as a temporary view to simulate caching
+CREATE OR REPLACE TEMP VIEW expensive_calc_cached AS
+SELECT 
+    department,
+    AVG(salary) as avg_salary,
+    SUM(salary) as total_salary,
+    COUNT(*) as emp_count,
+    MAX(salary) as max_salary,
+    MIN(salary) as min_salary,
+    STDDEV(salary) as salary_stddev,
+    VARIANCE(salary) as salary_variance,
+    PERCENTILE(salary, 0.25) as salary_q1,
+    PERCENTILE(salary, 0.75) as salary_q3
+FROM employees
+GROUP BY department;
+
+WITH department_stats AS (
     SELECT 
         d.dept_name,
         d.category,
@@ -33,7 +35,7 @@ department_stats AS (
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
-    JOIN expensive_calc e ON d.dept_name = e.department
+    JOIN expensive_calc_cached e ON d.dept_name = e.department
 ),
 project_analysis AS (
     SELECT 
