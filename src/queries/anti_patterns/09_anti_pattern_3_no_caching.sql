@@ -1,7 +1,9 @@
--- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
-WITH expensive_calc AS (
+-- ANTI-PATTERN 3: No Caching Strategy (Optimized)
+-- Optimization: Materialize expensive_calc to avoid recomputation
+-- Use a temp view to simulate caching in Spark SQL
+
+-- Step 1: Materialize expensive_calc as a temp view
+CREATE OR REPLACE TEMP VIEW expensive_calc AS
     SELECT 
         department,
         AVG(salary) as avg_salary,
@@ -14,9 +16,10 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.25) as salary_q1,
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
-    GROUP BY department
-),
-department_stats AS (
+    GROUP BY department;
+
+-- Step 2: Use the cached expensive_calc in downstream CTEs
+WITH department_stats AS (
     SELECT 
         d.dept_name,
         d.category,
@@ -73,4 +76,4 @@ SELECT
     END as resource_profile
 FROM department_stats ds
 JOIN project_analysis pa ON ds.dept_name = pa.department
-ORDER BY combined_total DESC, dept_name
+ORDER BY combined_total DESC, dept_name;
