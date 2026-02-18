@@ -1,22 +1,25 @@
--- ANTI-PATTERN 3: No Caching Strategy
--- This query violates the best practice of caching frequently used data
--- Problem: Repeatedly computing expensive aggregations without caching intermediate results
-WITH expensive_calc AS (
-    SELECT 
-        department,
-        AVG(salary) as avg_salary,
-        SUM(salary) as total_salary,
-        COUNT(*) as emp_count,
-        MAX(salary) as max_salary,
-        MIN(salary) as min_salary,
-        STDDEV(salary) as salary_stddev,
-        VARIANCE(salary) as salary_variance,
-        PERCENTILE(salary, 0.25) as salary_q1,
-        PERCENTILE(salary, 0.75) as salary_q3
-    FROM employees
-    GROUP BY department
-),
-department_stats AS (
+-- ANTI-PATTERN 3: No Caching Strategy (Optimized)
+-- Optimization: Materialize and cache expensive_calc to avoid recomputation
+
+-- Materialize and cache the expensive_calc intermediate result
+CREATE OR REPLACE TEMP VIEW expensive_calc AS
+SELECT 
+    department,
+    AVG(salary) as avg_salary,
+    SUM(salary) as total_salary,
+    COUNT(*) as emp_count,
+    MAX(salary) as max_salary,
+    MIN(salary) as min_salary,
+    STDDEV(salary) as salary_stddev,
+    VARIANCE(salary) as salary_variance,
+    PERCENTILE(salary, 0.25) as salary_q1,
+    PERCENTILE(salary, 0.75) as salary_q3
+FROM employees
+GROUP BY department;
+
+CACHE TABLE expensive_calc;
+
+WITH department_stats AS (
     SELECT 
         d.dept_name,
         d.category,
