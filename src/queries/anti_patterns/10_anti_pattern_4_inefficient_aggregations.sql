@@ -1,6 +1,39 @@
 -- ANTI-PATTERN 4: Inefficient Aggregation Strategy
 -- This query violates the best practice of efficient aggregations
 -- Problem: Multiple passes over data, complex window functions, and inefficient grouping
+WITH dept_salary_agg AS (
+    SELECT 
+        department,
+        AVG(salary) as dept_avg_salary,
+        SUM(CASE WHEN salary > 70000 THEN salary ELSE 0 END) as dept_high_salary_sum,
+        COUNT(CASE WHEN salary > 70000 THEN 1 END) as dept_high_salary_count
+    FROM employees
+    GROUP BY department
+),
+category_salary_agg AS (
+    SELECT 
+        d.category,
+        AVG(e.salary) as category_avg_salary
+    FROM employees e
+    JOIN departments d ON e.department = d.dept_name
+    GROUP BY d.category
+),
+dept_budget_agg AS (
+    SELECT 
+        department,
+        AVG(budget) as dept_avg_budget,
+        SUM(CASE WHEN budget > 80000 THEN budget ELSE 0 END) as dept_high_budget_sum,
+        COUNT(CASE WHEN budget > 80000 THEN 1 END) as dept_high_budget_count
+    FROM projects
+    GROUP BY department
+),
+dept_transaction_agg AS (
+    SELECT 
+        department,
+        AVG(amount) as dept_avg_transaction
+    FROM large_dataset
+    GROUP BY department
+)
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -14,18 +47,18 @@ SELECT
     p.budget as project_budget,
     l.amount as transaction_amount,
     l.transaction_id,
-    -- Multiple window functions with different partitions
+    -- Window functions for ranking (kept as is for identical output)
     ROW_NUMBER() OVER (ORDER BY e.salary DESC) as salary_rank,
     ROW_NUMBER() OVER (PARTITION BY e.department ORDER BY e.salary DESC) as dept_salary_rank,
     ROW_NUMBER() OVER (PARTITION BY d.category ORDER BY e.salary DESC) as category_salary_rank,
     ROW_NUMBER() OVER (PARTITION BY p.department ORDER BY p.budget DESC) as project_budget_rank,
     ROW_NUMBER() OVER (PARTITION BY l.department ORDER BY l.amount DESC) as transaction_amount_rank,
-    -- Expensive aggregations in window functions
-    AVG(e.salary) OVER (PARTITION BY e.department) as dept_avg_salary,
-    AVG(e.salary) OVER (PARTITION BY d.category) as category_avg_salary,
-    AVG(p.budget) OVER (PARTITION BY p.department) as dept_avg_budget,
-    AVG(l.amount) OVER (PARTITION BY l.department) as dept_avg_transaction,
-    -- Complex calculations in window functions
+    -- Use precomputed aggregates for efficiency
+    ds.dept_avg_salary,
+    cs.category_avg_salary,
+    db.dept_avg_budget,
+    dt.dept_avg_transaction,
+    -- Complex calculations in window functions (kept as is)
     SUM(e.salary + p.budget + l.amount) OVER (PARTITION BY e.department) as dept_total_value,
     SUM(e.salary + p.budget + l.amount) OVER (PARTITION BY d.category) as category_total_value,
     -- Multiple ranking functions
@@ -40,15 +73,19 @@ SELECT
     LEAD(e.salary, 1) OVER (ORDER BY e.salary DESC) as next_salary,
     LAG(p.budget, 1) OVER (PARTITION BY p.department ORDER BY p.budget DESC) as prev_budget,
     LEAD(p.budget, 1) OVER (PARTITION BY p.department ORDER BY p.budget DESC) as next_budget,
-    -- Complex conditional aggregations
-    SUM(CASE WHEN e.salary > 70000 THEN e.salary ELSE 0 END) OVER (PARTITION BY e.department) as dept_high_salary_sum,
-    SUM(CASE WHEN p.budget > 80000 THEN p.budget ELSE 0 END) OVER (PARTITION BY p.department) as dept_high_budget_sum,
-    COUNT(CASE WHEN e.salary > 70000 THEN 1 END) OVER (PARTITION BY e.department) as dept_high_salary_count,
-    COUNT(CASE WHEN p.budget > 80000 THEN 1 END) OVER (PARTITION BY p.department) as dept_high_budget_count
+    -- Use precomputed conditional aggregations
+    ds.dept_high_salary_sum,
+    db.dept_high_budget_sum,
+    ds.dept_high_salary_count,
+    db.dept_high_budget_count
 FROM employees e
 JOIN departments d ON e.department = d.dept_name
 JOIN projects p ON e.department = p.department
 JOIN large_dataset l ON e.id = l.employee_id
+LEFT JOIN dept_salary_agg ds ON e.department = ds.department
+LEFT JOIN category_salary_agg cs ON d.category = cs.category
+LEFT JOIN dept_budget_agg db ON p.department = db.department
+LEFT JOIN dept_transaction_agg dt ON l.department = dt.department
 WHERE e.salary > 50000
     AND p.budget > 30000
     AND l.amount > 5000
