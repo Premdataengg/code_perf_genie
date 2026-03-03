@@ -3,11 +3,11 @@
 -- Problem: Full table scan on large dataset without partition pruning
 WITH filtered_large_dataset AS (
     SELECT * FROM large_dataset
-    WHERE amount > 1000 
+    WHERE department IN ('Engineering', 'Marketing', 'Sales')
+        AND amount > 1000 
         AND amount < 50000
-        AND department IN ('Engineering', 'Marketing', 'Sales')
-        AND transaction_id % 2 = 0
         AND employee_id BETWEEN 1 AND 100
+        AND transaction_id % 2 = 0
 )
 SELECT 
     employee_id,
