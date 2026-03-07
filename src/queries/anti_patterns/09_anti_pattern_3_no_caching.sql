@@ -1,7 +1,9 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- OPTIMIZATION: In Spark SQL, cache expensive_calc for reuse
 WITH expensive_calc AS (
+    -- CACHE TABLE expensive_calc AS
     SELECT 
         department,
         AVG(salary) as avg_salary,
