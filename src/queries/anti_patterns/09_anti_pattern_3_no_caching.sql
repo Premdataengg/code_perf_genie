@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- OPTIMIZATION: Cache expensive_calc if reused multiple times
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -15,6 +16,7 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+    -- Suggestion: CACHE this result if reused
 ),
 department_stats AS (
     SELECT 
