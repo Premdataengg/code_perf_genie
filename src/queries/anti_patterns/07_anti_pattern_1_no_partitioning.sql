@@ -20,4 +20,5 @@ SELECT
     AVG(amount) OVER (PARTITION BY department) as dept_avg,
     COUNT(*) OVER (PARTITION BY department) as dept_count
 FROM filtered_large_dataset
+WHERE employee_id BETWEEN 1 AND 100
 ORDER BY department, amount DESC
