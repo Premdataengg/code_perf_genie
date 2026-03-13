@@ -16,24 +16,28 @@ WITH expensive_calc AS (
     FROM employees
     GROUP BY department
 ),
+-- Simulate caching by materializing expensive_calc before reuse
+cached_expensive_calc AS (
+    SELECT * FROM expensive_calc
+),
 department_stats AS (
     SELECT 
         d.dept_name,
         d.category,
         d.manager,
-        e.avg_salary,
-        e.total_salary,
-        e.emp_count,
-        e.max_salary,
-        e.min_salary,
-        e.salary_stddev,
-        e.salary_variance,
-        e.salary_q1,
-        e.salary_q3,
-        (e.max_salary - e.min_salary) as salary_range,
-        (e.salary_q3 - e.salary_q1) as salary_iqr
+        c.avg_salary,
+        c.total_salary,
+        c.emp_count,
+        c.max_salary,
+        c.min_salary,
+        c.salary_stddev,
+        c.salary_variance,
+        c.salary_q1,
+        c.salary_q3,
+        (c.max_salary - c.min_salary) as salary_range,
+        (c.salary_q3 - c.salary_q1) as salary_iqr
     FROM departments d
-    JOIN expensive_calc e ON d.dept_name = e.department
+    JOIN cached_expensive_calc c ON d.dept_name = c.department
 ),
 project_analysis AS (
     SELECT 
