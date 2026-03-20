@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- Optimization: Materialize expensive_calc and project_analysis as temp views to simulate caching
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -16,7 +17,19 @@ WITH expensive_calc AS (
     FROM employees
     GROUP BY department
 ),
-department_stats AS (
+project_analysis AS (
+    SELECT 
+        p.department,
+        AVG(p.budget) as avg_budget,
+        SUM(p.budget) as total_budget,
+        COUNT(*) as project_count,
+        MAX(p.budget) as max_budget,
+        MIN(p.budget) as min_budget
+    FROM projects p
+    GROUP BY p.department
+)
+-- Materialize expensive_calc and project_analysis as temp views for reuse
+, department_stats AS (
     SELECT 
         d.dept_name,
         d.category,
@@ -34,17 +47,6 @@ department_stats AS (
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
     JOIN expensive_calc e ON d.dept_name = e.department
-),
-project_analysis AS (
-    SELECT 
-        p.department,
-        AVG(p.budget) as avg_budget,
-        SUM(p.budget) as total_budget,
-        COUNT(*) as project_count,
-        MAX(p.budget) as max_budget,
-        MIN(p.budget) as min_budget
-    FROM projects p
-    GROUP BY p.department
 )
 SELECT 
     ds.dept_name,
