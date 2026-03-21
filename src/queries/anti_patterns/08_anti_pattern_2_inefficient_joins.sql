@@ -24,13 +24,8 @@ SELECT
         ELSE 'High Transaction'
     END as value_category
 FROM employees e
-JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
+JOIN /*+ BROADCAST(d) */ departments d ON e.department = d.dept_name AND d.category IN ('Tech', 'Business')
+JOIN /*+ BROADCAST(p) */ projects p ON e.department = p.department AND p.budget > 50000 AND p.start_date >= '2024-01-01' AND p.end_date <= '2024-12-31'
+JOIN large_dataset l ON e.id = l.employee_id AND l.amount > 10000
 WHERE e.salary > 60000
-    AND p.budget > 50000
-    AND l.amount > 10000
-    AND d.category IN ('Tech', 'Business')
-    AND p.start_date >= '2024-01-01'
-    AND p.end_date <= '2024-12-31'
 ORDER BY total_value DESC, employee_name
