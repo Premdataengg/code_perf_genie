@@ -16,7 +16,7 @@ SELECT
     department,
     transaction_id,
     date,
-    SUM(amount) OVER (PARTITION BY department ORDER BY transaction_id) as running_total,
+    SUM(amount) OVER (PARTITION BY department ORDER BY transaction_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as running_total,
     AVG(amount) OVER (PARTITION BY department) as dept_avg,
     COUNT(*) OVER (PARTITION BY department) as dept_count
 FROM filtered_large_dataset
