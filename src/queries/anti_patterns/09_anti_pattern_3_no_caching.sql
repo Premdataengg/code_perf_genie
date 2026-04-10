@@ -2,7 +2,7 @@
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
 WITH expensive_calc AS (
-    SELECT 
+    SELECT /*+ CACHE */
         department,
         AVG(salary) as avg_salary,
         SUM(salary) as total_salary,
