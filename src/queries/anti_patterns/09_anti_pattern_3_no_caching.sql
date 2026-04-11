@@ -16,6 +16,9 @@ WITH expensive_calc AS (
     FROM employees
     GROUP BY department
 ),
+cached_expensive_calc AS (
+    SELECT * FROM expensive_calc
+),
 department_stats AS (
     SELECT 
         d.dept_name,
@@ -33,7 +36,7 @@ department_stats AS (
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
-    JOIN expensive_calc e ON d.dept_name = e.department
+    JOIN cached_expensive_calc e ON d.dept_name = e.department
 ),
 project_analysis AS (
     SELECT 
