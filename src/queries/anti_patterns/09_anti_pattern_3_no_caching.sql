@@ -1,7 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
-WITH expensive_calc AS (
+WITH expensive_calc_uncached AS (
     SELECT 
         department,
         AVG(salary) as avg_salary,
@@ -15,6 +15,9 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+),
+expensive_calc AS (
+    SELECT * FROM expensive_calc_uncached
 ),
 department_stats AS (
     SELECT 
