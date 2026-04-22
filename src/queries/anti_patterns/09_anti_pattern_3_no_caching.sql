@@ -16,6 +16,9 @@ WITH expensive_calc AS (
     FROM employees
     GROUP BY department
 ),
+expensive_calc_cached AS (
+    SELECT * FROM expensive_calc
+),
 department_stats AS (
     SELECT 
         d.dept_name,
@@ -33,7 +36,7 @@ department_stats AS (
         (e.max_salary - e.min_salary) as salary_range,
         (e.salary_q3 - e.salary_q1) as salary_iqr
     FROM departments d
-    JOIN expensive_calc e ON d.dept_name = e.department
+    JOIN expensive_calc_cached e ON d.dept_name = e.department
 ),
 project_analysis AS (
     SELECT 
@@ -45,6 +48,9 @@ project_analysis AS (
         MIN(p.budget) as min_budget
     FROM projects p
     GROUP BY p.department
+),
+project_analysis_cached AS (
+    SELECT * FROM project_analysis
 )
 SELECT 
     ds.dept_name,
@@ -72,5 +78,5 @@ SELECT
         ELSE 'Balanced'
     END as resource_profile
 FROM department_stats ds
-JOIN project_analysis pa ON ds.dept_name = pa.department
+JOIN project_analysis_cached pa ON ds.dept_name = pa.department
 ORDER BY combined_total DESC, dept_name
