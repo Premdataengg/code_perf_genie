@@ -8,6 +8,7 @@ WITH filtered_large_dataset AS (
         AND department IN ('Engineering', 'Marketing', 'Sales')
         AND transaction_id % 2 = 0
         AND employee_id BETWEEN 1 AND 100
+        -- Partition pruning: add explicit partition column filter if available
 )
 SELECT 
     employee_id,
