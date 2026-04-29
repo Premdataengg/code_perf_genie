@@ -2,7 +2,8 @@
 -- This query violates the best practice of proper partitioning
 -- Problem: Full table scan on large dataset without partition pruning
 WITH filtered_large_dataset AS (
-    SELECT * FROM large_dataset
+    SELECT employee_id, project_id, amount, department, transaction_id, date
+    FROM large_dataset
     WHERE amount > 1000 
         AND amount < 50000
         AND department IN ('Engineering', 'Marketing', 'Sales')
