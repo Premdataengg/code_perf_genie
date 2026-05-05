@@ -1,6 +1,41 @@
 -- ANTI-PATTERN 5: Memory Inefficient Operations
 -- This query violates the best practice of memory-efficient operations
 -- Problem: Collecting large datasets, complex string operations, and inefficient data types
+WITH filtered_employees AS (
+    SELECT id, name, department, salary
+    FROM employees
+    WHERE salary > 50000 AND LENGTH(name) > 5
+),
+filtered_departments AS (
+    SELECT dept_name, category, manager
+    FROM departments
+    WHERE category IN ('Tech', 'Business')
+),
+filtered_projects AS (
+    SELECT project_id, project_name, budget, department, start_date, end_date
+    FROM projects
+    WHERE budget > 30000 AND LENGTH(project_name) > 10
+),
+filtered_large_dataset AS (
+    SELECT employee_id, amount, transaction_id, date
+    FROM large_dataset
+    WHERE amount > 5000
+),
+dept_avg_salary AS (
+    SELECT department, AVG(salary) as avg_salary
+    FROM employees
+    GROUP BY department
+),
+dept_max_budget AS (
+    SELECT department, MAX(budget) as max_budget
+    FROM projects
+    GROUP BY department
+),
+employee_total_transactions AS (
+    SELECT employee_id, SUM(amount) as total_transactions
+    FROM large_dataset
+    GROUP BY employee_id
+)
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -54,10 +89,10 @@ SELECT
         WHEN e.salary > 50000 AND p.budget > 40000 AND l.amount > 10000 THEN 'Bronze Tier'
         ELSE 'Standard Tier'
     END as overall_tier,
-    -- Expensive aggregations in subqueries
-    (SELECT AVG(salary) FROM employees WHERE department = e.department) as dept_avg_salary_subquery,
-    (SELECT MAX(budget) FROM projects WHERE department = p.department) as dept_max_budget_subquery,
-    (SELECT SUM(amount) FROM large_dataset WHERE employee_id = e.id) as employee_total_transactions_subquery,
+    -- Pre-aggregated subqueries
+    das.avg_salary as dept_avg_salary_subquery,
+    dmb.max_budget as dept_max_budget_subquery,
+    ett.total_transactions as employee_total_transactions_subquery,
     -- Complex mathematical operations
     POWER(e.salary, 2) as salary_squared,
     SQRT(p.budget) as budget_sqrt,
@@ -72,14 +107,11 @@ SELECT
         ' | Budget: $', CAST(p.budget AS STRING),
         ' | Transaction: $', CAST(l.amount AS STRING)
     ) as full_details
-FROM employees e
-JOIN departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 50000
-    AND p.budget > 30000
-    AND l.amount > 5000
-    AND d.category IN ('Tech', 'Business')
-    AND LENGTH(e.name) > 5
-    AND LENGTH(p.project_name) > 10
+FROM filtered_employees e
+JOIN filtered_departments d ON e.department = d.dept_name
+JOIN filtered_projects p ON e.department = p.department
+JOIN filtered_large_dataset l ON e.id = l.employee_id
+LEFT JOIN dept_avg_salary das ON e.department = das.department
+LEFT JOIN dept_max_budget dmb ON p.department = dmb.department
+LEFT JOIN employee_total_transactions ett ON e.id = ett.employee_id
 ORDER BY e.salary DESC, p.budget DESC, l.amount DESC
