@@ -1,6 +1,26 @@
 -- ANTI-PATTERN 5: Memory Inefficient Operations
 -- This query violates the best practice of memory-efficient operations
 -- Problem: Collecting large datasets, complex string operations, and inefficient data types
+WITH filtered_employees AS (
+    SELECT id, name, department, salary
+    FROM employees
+    WHERE salary > 50000 AND LENGTH(name) > 5
+),
+filtered_departments AS (
+    SELECT dept_name, category, manager
+    FROM departments
+    WHERE category IN ('Tech', 'Business')
+),
+filtered_projects AS (
+    SELECT project_id, project_name, budget, department, start_date, end_date
+    FROM projects
+    WHERE budget > 30000 AND LENGTH(project_name) > 10
+),
+filtered_large_dataset AS (
+    SELECT amount, transaction_id, date, employee_id
+    FROM large_dataset
+    WHERE amount > 5000
+)
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -72,14 +92,8 @@ SELECT
         ' | Budget: $', CAST(p.budget AS STRING),
         ' | Transaction: $', CAST(l.amount AS STRING)
     ) as full_details
-FROM employees e
-JOIN departments d ON e.department = d.dept_name
-JOIN projects p ON e.department = p.department
-JOIN large_dataset l ON e.id = l.employee_id
-WHERE e.salary > 50000
-    AND p.budget > 30000
-    AND l.amount > 5000
-    AND d.category IN ('Tech', 'Business')
-    AND LENGTH(e.name) > 5
-    AND LENGTH(p.project_name) > 10
+FROM filtered_employees e
+JOIN filtered_departments d ON e.department = d.dept_name
+JOIN filtered_projects p ON e.department = p.department
+JOIN filtered_large_dataset l ON e.id = l.employee_id
 ORDER BY e.salary DESC, p.budget DESC, l.amount DESC
