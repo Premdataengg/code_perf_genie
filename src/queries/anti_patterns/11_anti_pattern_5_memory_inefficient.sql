@@ -1,6 +1,15 @@
 -- ANTI-PATTERN 5: Memory Inefficient Operations
 -- This query violates the best practice of memory-efficient operations
 -- Problem: Collecting large datasets, complex string operations, and inefficient data types
+WITH dept_avg_salary AS (
+    SELECT department, AVG(salary) as dept_avg_salary FROM employees GROUP BY department
+),
+dept_max_budget AS (
+    SELECT department, MAX(budget) as dept_max_budget FROM projects GROUP BY department
+),
+employee_total_transactions AS (
+    SELECT employee_id, SUM(amount) as employee_total_transactions FROM large_dataset GROUP BY employee_id
+)
 SELECT 
     e.id as employee_id,
     e.name as employee_name,
@@ -15,25 +24,20 @@ SELECT
     l.amount as transaction_amount,
     l.transaction_id,
     l.date as transaction_date,
-    -- Expensive string operations
     CONCAT(e.name, ' - ', e.department, ' - ', CAST(e.salary AS STRING)) as employee_info,
     CONCAT(d.dept_name, ' (', d.category, ') - Manager: ', d.manager) as department_info,
     CONCAT(p.project_name, ' - Budget: $', CAST(p.budget AS STRING), ' - Duration: ', p.start_date, ' to ', p.end_date) as project_info,
     CONCAT('Transaction #', CAST(l.transaction_id AS STRING), ' - Amount: $', CAST(l.amount AS STRING), ' - Date: ', l.date) as transaction_info,
-    -- Complex string manipulations
     UPPER(SUBSTRING(e.name, 1, 3)) as name_prefix,
     LOWER(SUBSTRING(e.department, 1, 5)) as dept_prefix,
     REPLACE(e.name, ' ', '_') as name_underscore,
     REPLACE(e.department, ' ', '_') as dept_underscore,
-    -- Expensive date operations
     CAST(l.date AS DATE) as transaction_date_typed,
     DATE_ADD(CAST(l.date AS DATE), 30) as future_date,
     DATEDIFF(CAST(p.end_date AS DATE), CAST(p.start_date AS DATE)) as project_duration_days,
-    -- Complex calculations with type conversions
     CAST(e.salary AS DOUBLE) / CAST(p.budget AS DOUBLE) as salary_budget_ratio,
     CAST(l.amount AS DOUBLE) / CAST(e.salary AS DOUBLE) as transaction_salary_ratio,
     CAST(p.budget AS DOUBLE) / CAST(l.amount AS DOUBLE) as budget_transaction_ratio,
-    -- Expensive conditional logic
     CASE 
         WHEN e.salary > 80000 AND p.budget > 100000 THEN 'High Value Employee + High Budget Project'
         WHEN e.salary > 80000 AND p.budget <= 100000 THEN 'High Value Employee + Low Budget Project'
@@ -46,7 +50,6 @@ SELECT
         WHEN l.amount > 10000 THEN 'Low Value Transaction'
         ELSE 'Minimal Value Transaction'
     END as transaction_category,
-    -- Complex nested conditions
     CASE 
         WHEN e.salary > 80000 AND p.budget > 100000 AND l.amount > 50000 THEN 'Premium Tier'
         WHEN e.salary > 70000 AND p.budget > 80000 AND l.amount > 30000 THEN 'Gold Tier'
@@ -54,16 +57,13 @@ SELECT
         WHEN e.salary > 50000 AND p.budget > 40000 AND l.amount > 10000 THEN 'Bronze Tier'
         ELSE 'Standard Tier'
     END as overall_tier,
-    -- Expensive aggregations in subqueries
-    (SELECT AVG(salary) FROM employees WHERE department = e.department) as dept_avg_salary_subquery,
-    (SELECT MAX(budget) FROM projects WHERE department = p.department) as dept_max_budget_subquery,
-    (SELECT SUM(amount) FROM large_dataset WHERE employee_id = e.id) as employee_total_transactions_subquery,
-    -- Complex mathematical operations
+    das.dept_avg_salary as dept_avg_salary_subquery,
+    dmb.dept_max_budget as dept_max_budget_subquery,
+    ett.employee_total_transactions as employee_total_transactions_subquery,
     POWER(e.salary, 2) as salary_squared,
     SQRT(p.budget) as budget_sqrt,
     LOG(l.amount) as amount_log,
     EXP(e.salary / 10000) as salary_exp,
-    -- String concatenation with multiple fields
     CONCAT(
         'Employee: ', e.name, 
         ' | Department: ', e.department, 
@@ -76,6 +76,9 @@ FROM employees e
 JOIN departments d ON e.department = d.dept_name
 JOIN projects p ON e.department = p.department
 JOIN large_dataset l ON e.id = l.employee_id
+LEFT JOIN dept_avg_salary das ON e.department = das.department
+LEFT JOIN dept_max_budget dmb ON p.department = dmb.department
+LEFT JOIN employee_total_transactions ett ON e.id = ett.employee_id
 WHERE e.salary > 50000
     AND p.budget > 30000
     AND l.amount > 5000
