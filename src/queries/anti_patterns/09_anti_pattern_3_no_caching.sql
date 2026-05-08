@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- CACHE expensive_calc and project_analysis for reuse
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -16,6 +17,8 @@ WITH expensive_calc AS (
     FROM employees
     GROUP BY department
 ),
+-- CACHE TABLE expensive_calc
+
 department_stats AS (
     SELECT 
         d.dept_name,
@@ -46,6 +49,7 @@ project_analysis AS (
     FROM projects p
     GROUP BY p.department
 )
+-- CACHE TABLE project_analysis
 SELECT 
     ds.dept_name,
     ds.category,
