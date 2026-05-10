@@ -1,6 +1,7 @@
 -- ANTI-PATTERN 3: No Caching Strategy
 -- This query violates the best practice of caching frequently used data
 -- Problem: Repeatedly computing expensive aggregations without caching intermediate results
+-- HINT: In Spark SQL, cache expensive_calc and project_analysis if reused elsewhere
 WITH expensive_calc AS (
     SELECT 
         department,
@@ -15,6 +16,7 @@ WITH expensive_calc AS (
         PERCENTILE(salary, 0.75) as salary_q3
     FROM employees
     GROUP BY department
+    -- Consider caching this CTE if reused
 ),
 department_stats AS (
     SELECT 
@@ -45,6 +47,7 @@ project_analysis AS (
         MIN(p.budget) as min_budget
     FROM projects p
     GROUP BY p.department
+    -- Consider caching this CTE if reused
 )
 SELECT 
     ds.dept_name,
